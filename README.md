@@ -420,21 +420,42 @@ argument for keeping the timeline server-stamped and the client purely a consume
 
 ## Time spent
 
-Roughly **12 hours** end to end: ~2h on the RFC 6455 framing layer and its tests, ~3h on
-protocol design and the server's room/presence/tick logic, ~3h on the client sync engine
-(clock sync, batching, interpolation), ~2h on the demo UI and renderer, and ~2h on tests,
-the benchmark and this documentation.
+Roughly **a day of focused work across two sessions**. The first session produced the
+engine end to end — the RFC 6455 framing layer, the protocol, the server's room/presence/
+tick logic, the client sync engine (clock sync, batching, interpolation), the test suite,
+the benchmark and this documentation. The second session was the interface: replacing the
+first-pass dashboard with the console design, and the review rounds that followed.
 
 ## AI tool disclosure
 
-I used Claude (Anthropic) as a coding assistant throughout: drafting implementation
-scaffolding, the test suite and this documentation, and as a reviewer for the trickier
-edge cases in the framing layer and the reconnect state machine. Every design decision —
-the wire format, the render-in-the-past model, the clean-vs-abnormal close distinction,
-the resume-token seat model — was mine, and I reviewed and adjusted all generated code.
-I can walk through any line of it.
+This was built with **Claude Code** (Anthropic's Claude Opus 5) as a pair programmer, and
+I want to be specific about the split rather than vague.
 
-Three bugs found by actually running the thing rather than by reading it, worth noting
+**What the AI did.** Wrote the first draft of nearly every file from a brief I gave it;
+wrote the tests and the benchmark; drafted this README and ARCHITECTURE.md; ran the app in
+a browser with several tabs, throttled the network, killed sockets and inspected the
+results; and found and fixed bugs that only showed up by running it. The UI was designed
+with the **impeccable** design skill ([skills.sh/pbakaus/impeccable](https://skills.sh/pbakaus/impeccable)),
+which drove a structured process: a product brief captured from my answers, a randomised
+direction roll that assigned the mission-control concept from a ranked list, a written
+direction contract, and four independent review passes that found ten defects in the first
+build — including two I would not have caught by reading the code.
+
+**What I did.** Set the constraints and made the calls the AI could not: that no library
+does any of the sync; that the interface must serve a reviewer with several windows tiled;
+that every existing control stays reachable; that no runtime dependency is added. I chose
+the direction from the roll. I read every file that shipped, pushed back where I
+disagreed, and reworked what I did not like. I can walk through any line of it and defend
+every decision in it — the wire format, the render-in-the-past model, the clean-versus-
+abnormal close distinction, the resume-token seat model, the idle-versus-starved
+distinction in the status matrix.
+
+**The honest caveat.** A reviewer should assume the AI's share of the keystrokes was very
+high. What I am submitting is my judgement about what to build and whether it is correct,
+exercised over an AI that types faster than I do — and the assignment is explicit that
+this is allowed provided it is disclosed.
+
+Three bugs found by actually running the engine rather than by reading it, worth noting
 because they are the interesting ones:
 
 1. **Abnormal closes were being classified as clean.** A TCP reset was mapped to close
@@ -447,6 +468,11 @@ because they are the interesting ones:
    different sources.
 3. **Duplicate display names.** Independently-generated names collide ~1.6% of the time
    per pair; the server is the only party that can see the whole room, so it dedupes.
+
+And two the design review caught in the interface that I had shipped without noticing:
+the roster's "freshness" bars were wired to *staleness* and grew as signal died, and the
+LINK lamp watched only whether the socket existed, so it sat green while the link was
+being throttled — falsifying the one behaviour the console exists to demonstrate.
 
 ## Layout
 
