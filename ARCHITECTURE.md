@@ -220,18 +220,18 @@ question about that one number.
 The console face is a separate concern from the sync engine and is kept that way. Two
 seams matter:
 
-**`ui/console.ts` is the only translator.** It turns engine state into the words the face
-uses — `interpolated` becomes `TRACK`, `extrapolated` becomes `COAST` — and derives the
-GO/NO-GO matrix from telemetry that is actually measured. Nothing else in the UI decides
-what a subsystem's health is, and no lamp on the face is decorative: LINK reads DEGRADED
-off measured RTT and jitter, BUFFER reads STARVED only when a station is still receiving
-and still starving. A station that merely stopped moving reads IDLE, because an instrument
-that reports a user sitting still as a fault is an instrument nobody will trust twice.
+**`ui/console.ts` is the only translator.** It turns engine state into plain words —
+`interpolated` becomes *Smooth*, `extrapolated` becomes *Predicting* — and derives the four
+status pills from telemetry that is actually measured. Nothing else in the UI decides what
+is healthy, and no indicator is decorative: Connection reads *Slow* off measured RTT and
+jitter, Smoothing reads *Stalled* only when a peer is still receiving and still starving. A
+peer who merely stopped moving reads *Idle*, because an indicator that reports a user
+sitting still as a fault is one nobody will trust twice.
 
-**`render.ts` owns the glass and nothing else.** It is handed already-interpolated
-positions in normalized [0,1] space. It exports `dashFor(code)`, which the roster's plot
-key imports for its legend marks — so the key that explains the symbology is drawn from
-the same function as the symbology, and cannot drift from it.
+**`render.ts` owns the canvas and nothing else.** It is handed already-interpolated
+positions in normalized [0,1] space. It exports `peerColor(hue)`, which the people list
+imports for its markers — so the colour beside a name is the colour of that cursor, by
+construction.
 
 Positions never enter React state. The rAF loop pulls interpolated positions straight out
 of the room; React re-renders about five times a second, for the rails only. The one place

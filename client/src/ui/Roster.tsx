@@ -2,8 +2,8 @@ import type { ReactElement } from 'react';
 import type { PeerInfo } from '../protocol.js';
 import type { PeerFrame } from '../net/room.js';
 import { callsign, trackingState } from './console.js';
-import { IconTarget } from './icons.js';
-import { dashFor } from '../render.js';
+import { peerColor } from '../render.js';
+
 
 export interface RosterProps {
   self: PeerInfo | null;
@@ -14,38 +14,38 @@ export interface RosterProps {
 }
 
 /**
- * Controllers on station.
+ * Who's here.
  *
  * Every member is listed, including one who has joined and never moved — presence and the
- * plot answer different questions, and a roster that hides someone until they twitch is
+ * canvas answer different questions, and a list that hides someone until they twitch is
  * lying about who is in the room.
  *
- * The two stacked bars per station are the per-peer network readout: signal freshness over
- * arrival jitter. Watch them while throttling the link.
+ * The bar under each person is the per-peer network readout: how fresh their last update
+ * is, with their arrival jitter underneath. Watch it while throttling the connection.
  */
 export function Roster({ self, peers, scores, connected, roomId }: RosterProps): ReactElement {
   const total = peers.length + (self ? 1 : 0);
   const selfState = connected
-    ? { code: 'ON CONSOLE', tone: 'go' as const }
-    : { code: 'OFF LINE', tone: 'nogo' as const };
+    ? { code: 'Connected', tone: 'go' as const }
+    : { code: 'Offline', tone: 'nogo' as const };
 
   return (
-    <section className="roster" aria-label="Controllers on station">
+    <section className="roster" aria-label="People in the room">
       <div className="roster-head">
-        <span className="placard">On station</span>
-        <span className="count">{String(total).padStart(2, '0')}</span>
+        <span className="placard">People</span>
+        <span className="count">{total}</span>
       </div>
 
       <ul className="roster-list">
         {self && (
           <li className="station is-self">
-            <span className="hue" style={{ background: `hsl(${self.hue}, 58%, 56%)` }} />
+            <span className="hue" style={{ background: peerColor(self.hue) }} />
             <span className="name">
               {callsign(self.name)} <em>you</em>
             </span>
             <span className={`track tone-${selfState.tone}`}>{selfState.code}</span>
             <span className="meters">
-              <span className="placard">Score</span>
+              <span className="placard">Targets won</span>
               <span className="score">{scores.get(self.pid) ?? 0}</span>
             </span>
           </li>
@@ -55,7 +55,7 @@ export function Roster({ self, peers, scores, connected, roomId }: RosterProps):
           const state = trackingState(peer.position.mode, peer.online, peer.staleness);
           return (
             <li key={peer.pid} className={peer.online ? 'station' : 'station is-lost'}>
-              <span className="hue" style={{ background: `hsl(${peer.hue}, 58%, 56%)` }} />
+              <span className="hue" style={{ background: peerColor(peer.hue) }} />
               <span className="name">{callsign(peer.name)}</span>
               <span className={`track tone-${state.tone}`}>
                 {state.code}
@@ -80,8 +80,8 @@ export function Roster({ self, peers, scores, connected, roomId }: RosterProps):
 
         {peers.length === 0 && (
           <li className="roster-empty">
-            No other stations. Open this page in another tab — each tab is its own client —
-            or join from a second device on <code>?room={roomId}</code>.
+            Nobody else yet. Open this page in another tab — each tab is its own person — or
+            share the room code <code>{roomId}</code>.
           </li>
         )}
       </ul>
@@ -93,99 +93,42 @@ export function Roster({ self, peers, scores, connected, roomId }: RosterProps):
 }
 
 /**
- * The symbology, spelled out.
- *
- * A reviewer meets these marks for the first time on this page, and a legend that teaches
- * them costs four lines. It also anchors the foot of the rail with something true rather
- * than leaving a void under a short roster.
+ * What the states mean, in the words the list uses. A first-time reviewer meets these on
+ * this page, and four lines of legend costs less than a guess.
  */
 function PlotKey(): ReactElement {
   return (
     <div className="plot-key">
-      <span className="placard">Plot key</span>
+      <span className="placard">Cursor states</span>
       <dl>
         <div>
-          <dt>
-            <Mark code="TRACK" /> TRACK
-          </dt>
-          <dd>drawn between two samples</dd>
+          <dt><Dot tone="go" /> Smooth</dt>
+          <dd>drawn between two known positions</dd>
         </div>
         <div>
-          <dt>
-            <Mark code="COAST" /> COAST
-          </dt>
-          <dd>projected from last velocity</dd>
+          <dt><Dot tone="caution" /> Predicting</dt>
+          <dd>no fresh data; projected from last velocity</dd>
         </div>
         <div>
-          <dt>
-            <Mark code="HOLD" /> HOLD
-          </dt>
-          <dd>starved past the projection budget</dd>
+          <dt><Dot tone="caution" /> Stalled</dt>
+          <dd>waiting for data past the prediction limit</dd>
         </div>
         <div>
-          <dt>
-            <Mark code="IDLE" /> IDLE
-          </dt>
+          <dt><Dot tone="off" /> Idle</dt>
           <dd>connected, not moving</dd>
         </div>
         <div>
-          <dt>
-            <Mark code="LOST" muted /> LOST
-          </dt>
-          <dd>dropped, seat held 5s to resume</dd>
-        </div>
-        <div>
-          <dt>
-            <Crosshair /> YOU
-          </dt>
-          <dd>your own pointer, never interpolated</dd>
-        </div>
-        <div>
-          <dt>
-            <IconTarget width={11} height={11} strokeWidth={2} /> ACQUIRE
-          </dt>
-          <dd>tap it — earliest capture time wins</dd>
+          <dt><Dot tone="nogo" /> Reconnecting</dt>
+          <dd>dropped; seat held 5 seconds</dd>
         </div>
       </dl>
-      <p>Bars read signal freshness over arrival jitter.</p>
+      <p>Bars show freshness of the last update, with arrival jitter underneath.</p>
     </div>
   );
 }
 
-/** The own-station marker, at key scale. */
-function Crosshair(): ReactElement {
-  return (
-    <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden focusable="false">
-      <g stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-        <path d="M0.8 5.5h2M8.2 5.5h2M5.5 0.8v2M5.5 8.2v2" />
-      </g>
-      <circle cx="5.5" cy="5.5" r="1" fill="currentColor" />
-    </svg>
-  );
-}
-
-/**
- * The station symbol at key scale. The dash pattern comes from the same function the plot
- * draws with, so the key cannot drift from the glass it explains.
- */
-function Mark({ code, muted }: { code: string; muted?: boolean }): ReactElement {
-  const dash = dashFor(code);
-  return (
-    <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden focusable="false">
-      <rect
-        x="1.5"
-        y="1.5"
-        width="8"
-        height="8"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeDasharray={dash.length ? dash.join(' ') : undefined}
-        opacity={muted ? 0.55 : 1}
-      />
-      <rect x="5" y="5" width="1.5" height="1.5" fill="currentColor" opacity={muted ? 0.55 : 1} />
-    </svg>
-  );
+function Dot({ tone }: { tone: 'go' | 'caution' | 'nogo' | 'off' }): ReactElement {
+  return <span className="lamp" data-tone={tone} aria-hidden />;
 }
 
 /**

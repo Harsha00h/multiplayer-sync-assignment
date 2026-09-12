@@ -148,7 +148,7 @@ export class Room {
   private readonly targetListeners = new Set<(target: TargetState, lost: number[]) => void>();
   private readonly counterListeners = new Set<(state: CounterState) => void>();
 
-  constructor(private readonly options: RoomOptions) {
+  constructor(options: RoomOptions) {
     this.delayOverride = options.interpolationDelayMs ?? null;
     this.connection = new Connection({
       url: options.url ?? defaultServerUrl(),

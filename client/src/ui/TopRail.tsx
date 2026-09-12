@@ -32,14 +32,14 @@ export function TopRail({ roomId, met, matrix, onLeave }: TopRailProps): ReactEl
         <span className="placard">Room</span>
         <span className="room">{roomId}</span>
         <button type="button" className="leave" onClick={onLeave}>
-          Change room
+          Leave
         </button>
       </div>
 
       <div className="met">
-        <span className="placard">Elapsed</span>
+        <span className="placard">Session</span>
         <span className="clock">
-          T+<time>{met}</time>
+          <time>{met}</time>
         </span>
       </div>
 
@@ -52,7 +52,7 @@ export function TopRail({ roomId, met, matrix, onLeave }: TopRailProps): ReactEl
         </span>
       </div>
 
-      <div className="matrix" role="group" aria-label="Subsystem status">
+      <div className="matrix" role="group" aria-label="Status">
         {matrix.map((row) => {
           const Glyph = GLYPH[row.id];
           return (

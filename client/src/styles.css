@@ -1,75 +1,57 @@
 /*
- * Flight Director Console
+ * Quiet, light, minimal.
  *
- * A lit console face in warm gray-green panel metal with one dark bezelled glass inset.
- * Elevation is declared once, by scored seam and bevel — there are no drop shadows on
- * panels, because a metal face does not float. Lamp colour is rationed to state: green
- * reads GO, amber reads caution, red reads no-go, and participant hues live strictly
- * inside the glass.
+ * Near-monochrome surfaces, hairline borders, small type, generous space. Colour is
+ * reserved for two things only: the state dots (green / amber / red) and the participants'
+ * cursors on the canvas. Nothing floats; elevation is a 1px border, with one soft shadow
+ * on the lobby card because it is the only element that sits on nothing.
+ *
+ * System font stack throughout. No external resources — the demo runs offline.
  */
 
 /* ---------------------------------------------------------------- tokens */
 
 :root {
-  /* Panel metal. The face is lit because the room it is read in is lit. */
-  --panel: #c2c6b9;
-  --panel-lit: #cdd1c3;
-  --panel-deep: #b1b6a7;
-  --panel-recess: #a4a99a;
-  --seam: #8b9082;
-  --seam-light: rgba(255, 255, 255, 0.55);
-  --seam-dark: rgba(28, 32, 24, 0.22);
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --surface-2: #f5f5f5;
+  --border: #e5e5e5;
+  --border-strong: #d4d4d4;
 
-  /* Engraved ink. Secondary is tinted from the panel hue, never gray. */
-  --ink: #191c17;
-  --ink-2: #4a4f44; /* 4.84:1 on panel */
-  /* Text set on the recessed well (--panel-recess), where --ink-2 only reaches 3.50:1. */
-  --ink-recess: #33372f; /* 5.05:1 on panel-recess */
-  /* Non-text only: icon glyphs and hairlines. Any text tint stops at --ink-2. */
-  --ink-3: #646a5c;
+  --text: #171717; /* 16.1:1 on white */
+  --text-2: #6b6b6b; /* 5.3:1 on white, 5.0:1 on --bg */
+  --text-3: #a3a3a3; /* NON-TEXT ONLY: icons, hairlines, disabled glyphs */
 
-  /* The one dark region on the face. */
-  --glass: #0a0e0c;
-  --glass-rule: #1d2c24;
-  --glass-ink: #cfd8cf;
-  --glass-ink-2: #7d8b81;
+  --go: #22c55e;
+  --caution: #f59e0b;
+  --nogo: #ef4444;
+  --off: #d4d4d4;
 
-  /* Lamps. One hue, one meaning. */
-  --go: #4e9a5b;
-  --caution: #cf8a24;
-  --nogo: #bf4632;
-  --lamp-off: #7e8376;
+  /* Text twins of the dots: legible on white, verified >= 4.5:1. */
+  --go-text: #15803d; /* 4.9:1 */
+  --caution-text: #b45309; /* 4.8:1 */
+  --nogo-text: #b91c1c; /* 6.0:1 */
 
-  /* Each lamp fill has a darkened text twin: the fills are not legible as type on the
-     panel. All three verified >= 4.5:1 (4.54 / 4.54 / 4.59). */
-  --tone-go: #275c31;
-  --tone-caution: #6f4a0e;
-  --tone-nogo: #8f3123;
+  --accent: #171717;
+  --accent-hover: #262626;
+  --focus: #2563eb;
+  --focus-glow: rgba(37, 99, 235, 0.15);
+  --selection: #dbeafe;
+  --border-hover: #b8b8b8;
+  --danger-bg: #fef2f2;
+  --danger-border: #fecaca;
+  --overlay: rgba(255, 255, 255, 0.85);
+  --shadow-thumb: rgba(0, 0, 0, 0.08);
+  --shadow-card: rgba(0, 0, 0, 0.04);
 
-  --focus: #14304f;
+  --canvas: #ffffff;
+  --canvas-dot: #e5e5e5;
 
-  /* Control faces. Named because they are reused, and because a design system whose
-     values live as literals in the rules is a system only on paper. */
-  --rocker-live: #7f9a7c;
-  --key-hover: #d6dacc;
-  --bezel-edge: #6f7468;
-  --guard-face: #bda9a2;
-  --guard-face-lit: #cbb8b2;
-  --guard-face-hover: #c6b2ab;
-  --guard-face-hover-lit: #d5c2bc;
-  --guard-edge: #8c6f66;
-  --guard-ink: #55211a;
-  --annunciate-go: #9fe0ab;
-  --annunciate-caution: #f0c583;
-  --shadow-lamp: rgba(0, 0, 0, 0.25);
-  --knurl: rgba(0, 0, 0, 0.16);
+  --radius: 6px;
+  --radius-lg: 10px;
 
-  --engrave: 0 1px 0 rgba(255, 255, 255, 0.5);
-  --bevel-up: inset 0 1px 0 var(--seam-light), inset 0 -1px 0 var(--seam-dark);
-  --bevel-down: inset 0 1px 2px var(--seam-dark), inset 0 -1px 0 var(--seam-light);
-
-  --placard: 600 10px/1.1 'Archivo Narrow', 'Arial Narrow', sans-serif;
-  --readout: 500 13px/1.2 'Azeret Mono', ui-monospace, SFMono-Regular, monospace;
+  --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 
   color-scheme: light;
 }
@@ -81,32 +63,30 @@
 }
 
 ::selection {
-  background: var(--caution);
-  color: var(--ink);
+  background: var(--selection);
+  color: var(--text);
 }
 
 html {
-  scrollbar-color: var(--seam) var(--panel-recess);
+  scrollbar-color: var(--border-strong) transparent;
   scrollbar-width: thin;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--panel-recess);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--seam);
-  border: 2px solid var(--panel-recess);
-  border-radius: 2px;
+  background: var(--border-strong);
+  border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-3);
+  background: var(--text-3);
 }
 
-/* Available to assistive technology, absent from the face. */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -124,11 +104,6 @@ html {
   outline-offset: 2px;
 }
 
-/* Inside the glass the panel focus colour would vanish. */
-.bay :focus-visible {
-  outline-color: var(--glass-ink);
-}
-
 html,
 body,
 #root {
@@ -137,39 +112,43 @@ body,
 
 body {
   margin: 0;
-  background: var(--panel-recess);
-  color: var(--ink);
-  font: 400 13px/1.5 'Archivo', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font: 13px/1.5 var(--font);
   font-variant-numeric: tabular-nums;
   overflow: hidden;
-  caret-color: var(--nogo);
+  caret-color: var(--text);
   -webkit-font-smoothing: antialiased;
 }
 
 /* ------------------------------------------------------------ type roles */
 
+/* Small labels: 11px, secondary, no uppercase — the quiet register. */
 .placard {
-  font: var(--placard);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  text-shadow: var(--engrave);
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-2);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* --------------------------------------------------------------- console */
 
 .console {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 306px;
+  grid-template-columns: minmax(0, 1fr) 280px;
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas:
     'top    top'
     'bay    roster'
     'bottom bottom';
   height: 100%;
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, var(--panel-lit), var(--panel));
+  background: var(--bg);
 }
 
 /* ------------------------------------------------------------- top rail */
@@ -177,117 +156,112 @@ body {
 .rail-top {
   grid-area: top;
   display: flex;
-  align-items: stretch;
-  gap: 0;
-  border-bottom: 1px solid var(--seam);
-  box-shadow: var(--bevel-up);
+  align-items: center;
+  gap: 24px;
+  padding: 0 20px;
+  height: 52px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
 }
 
 .designation {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3px;
-  padding: 10px 18px;
-  border-right: 1px solid var(--seam);
+  align-items: baseline;
+  gap: 8px;
   min-width: 0;
 }
 
+.designation .placard {
+  display: none;
+}
+
 .designation .room {
-  font: 700 17px/1 'Archivo Narrow', sans-serif;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-shadow: var(--engrave);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+.designation .leave {
+  margin-left: 6px;
+  padding: 3px 8px;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font: 12px/1 var(--font);
+  color: var(--text-2);
+  cursor: pointer;
+  transition: background-color 120ms, color 120ms;
+}
+
+.designation .leave:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
 .met {
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3px;
-  padding: 10px 18px;
-  border-right: 1px solid var(--seam);
+  align-items: baseline;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 12px;
 }
 
 .met .clock {
-  font: 500 17px/1 'Azeret Mono', monospace;
-  letter-spacing: 0.02em;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
 }
 
 .nameplate {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 3px;
-  padding: 10px 18px;
-  border-right: 1px solid var(--seam);
-  min-width: 0;
+  display: none;
 }
 
-.nameplate .plate {
-  font: 500 10px/1 'Azeret Mono', monospace;
-  letter-spacing: 0.06em;
-  color: var(--ink-2);
-  white-space: nowrap;
-}
-
-/* The GO / NO-GO matrix. Four subsystems, one lamp each. */
 .matrix {
   display: flex;
+  gap: 4px;
   margin-left: auto;
 }
 
+/* A status pill: dot + label + value. */
 .matrix-cell {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 10px 16px;
-  border-left: 1px solid var(--seam);
-  min-width: 132px;
+  gap: 7px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 12px;
 }
 
 .matrix-cell .glyph {
-  color: var(--ink-3);
-  flex-shrink: 0;
+  display: none;
 }
 
 .matrix-cell .stack {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+  gap: 5px;
+  align-items: baseline;
+  white-space: nowrap;
 }
 
 .matrix-cell .state {
-  font: 600 11px/1.2 'Azeret Mono', monospace;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-  transition: color 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  font-weight: 500;
+  transition: color 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* ------------------------------------------------------------------ lamp */
+/* ------------------------------------------------------------------ dot */
 
-/*
- * The console's one authored motion.
- *
- * Throwing a switch moves several readings at once. Easing the lamps and state words on a
- * shared exponential curve — with the numerals damped in useDamped.ts on the same
- * constant — makes that one settling event rather than four independent snaps at the next
- * telemetry tick.
- */
 .lamp {
-  width: 11px;
-  height: 11px;
-  border-radius: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
   flex-shrink: 0;
-  background: var(--lamp-off);
-  border: 1px solid var(--seam-dark);
-  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.4), inset 0 -1px 1px var(--shadow-lamp);
-  transition: background-color 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  background: var(--off);
+  transition: background-color 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .lamp[data-tone='go'] {
@@ -299,23 +273,18 @@ body {
 .lamp[data-tone='nogo'] {
   background: var(--nogo);
 }
-.lamp[data-tone='off'] {
-  background: var(--lamp-off);
-  opacity: 0.55;
-}
 
-/* All four verified >= 4.5:1 against the panel. */
 .tone-go {
-  color: var(--tone-go);
+  color: var(--go-text);
 }
 .tone-caution {
-  color: var(--tone-caution);
+  color: var(--caution-text);
 }
 .tone-nogo {
-  color: var(--tone-nogo);
+  color: var(--nogo-text);
 }
 .tone-off {
-  color: var(--ink-2);
+  color: var(--text-2);
 }
 
 /* ------------------------------------------------------------------- bay */
@@ -326,20 +295,16 @@ body {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  padding: 14px 14px 0;
+  padding: 16px 16px 0;
 }
 
-/* The bezel: the one recessed thing on the face. */
 .glass {
   position: relative;
   flex: 1;
   min-height: 0;
-  background: var(--glass);
-  border: 1px solid var(--bezel-edge);
-  border-radius: 3px;
-  box-shadow:
-    inset 0 2px 10px rgba(0, 0, 0, 0.75),
-    0 1px 0 var(--seam-light);
+  background: var(--canvas);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   overflow: hidden;
   cursor: none;
   touch-action: none;
@@ -351,54 +316,34 @@ body {
   height: 100%;
 }
 
-/* Corner registration marks, engraved into the bezel's inner edge. */
 .glass::after {
-  content: '';
-  position: absolute;
-  inset: 7px;
-  pointer-events: none;
-  background:
-    linear-gradient(var(--glass-rule), var(--glass-rule)) left top / 12px 1px no-repeat,
-    linear-gradient(var(--glass-rule), var(--glass-rule)) left top / 1px 12px no-repeat,
-    linear-gradient(var(--glass-rule), var(--glass-rule)) right top / 12px 1px no-repeat,
-    linear-gradient(var(--glass-rule), var(--glass-rule)) right top / 1px 12px no-repeat,
-    linear-gradient(var(--glass-rule), var(--glass-rule)) left bottom / 12px 1px no-repeat,
-    linear-gradient(var(--glass-rule), var(--glass-rule)) left bottom / 1px 12px no-repeat,
-    linear-gradient(var(--glass-rule), var(--glass-rule)) right bottom / 12px 1px no-repeat,
-    linear-gradient(var(--glass-rule), var(--glass-rule)) right bottom / 1px 12px no-repeat;
+  display: none;
 }
 
-/* One imperative line, permanently under the glass. */
 .imperative {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 2px 11px;
-  font: var(--placard);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  text-shadow: var(--engrave);
+  padding: 10px 2px 12px;
+  font-size: 12px;
+  color: var(--text-2);
 }
 
 .imperative .rule {
   flex: 1;
-  height: 1px;
-  background: var(--seam);
-  opacity: 0.6;
 }
 
 .imperative strong {
-  color: var(--ink);
-  font-weight: 700;
+  font-weight: 500;
+  color: var(--text);
 }
 
 /* ---------------------------------------------------------------- roster */
 
 .roster {
   grid-area: roster;
-  border-left: 1px solid var(--seam);
-  box-shadow: inset 1px 0 0 var(--seam-light);
+  border-left: 1px solid var(--border);
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   min-height: 0;
@@ -408,60 +353,59 @@ body {
   display: flex;
   align-items: baseline;
   gap: 8px;
-  padding: 12px 16px 10px;
-  border-bottom: 1px solid var(--seam);
+  padding: 14px 16px 10px;
+}
+
+.roster-head .placard {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
 }
 
 .roster-head .count {
   margin-left: auto;
-  font: 500 15px/1 'Azeret Mono', monospace;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
 }
 
-/* Not flex:1 — a growing list used to open a gap between the last station and the key.
-   The key now follows the roster directly and any leftover panel falls to the foot of the
-   rail, where blank panel is what a console face actually has. */
 .roster-list {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 8px;
   overflow-y: auto;
   flex: 0 1 auto;
   min-height: 0;
 }
 
-.roster-fill {
-  flex: 1 1 auto;
-  min-height: 0;
-}
-
 .station {
   display: grid;
-  grid-template-columns: 3px 1fr auto;
-  gap: 0 10px;
+  grid-template-columns: 8px 1fr auto;
+  gap: 2px 10px;
   align-items: center;
-  padding: 9px 16px 9px 13px;
-  border-bottom: 1px solid rgba(139, 144, 130, 0.45);
+  padding: 8px;
+  border-radius: var(--radius);
 }
 
 .station.is-self {
-  background: rgba(255, 255, 255, 0.22);
+  background: var(--surface-2);
 }
 
 .station.is-lost {
-  opacity: 0.62;
+  opacity: 0.5;
 }
 
-/* The hue strip is the peer's colour in the glass — a key, not decoration. */
 .station .hue {
   grid-row: 1 / span 2;
-  align-self: stretch;
-  border-radius: 1px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  align-self: center;
 }
 
 .station .name {
-  font: 600 12px/1.2 'Archivo Narrow', sans-serif;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-size: 13px;
+  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -469,16 +413,15 @@ body {
 
 .station .name em {
   font-style: normal;
-  color: var(--ink-2);
-  font-weight: 500;
+  font-weight: 400;
+  color: var(--text-2);
 }
 
 .station .track {
-  font: 600 10px/1.2 'Azeret Mono', monospace;
-  letter-spacing: 0.06em;
+  font-size: 11px;
   text-align: right;
   white-space: nowrap;
-  transition: color 420ms cubic-bezier(0.16, 1, 0.3, 1);
+  transition: color 300ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .station .meters {
@@ -486,72 +429,89 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 5px;
 }
 
-/* Two stacked bars: signal freshness over arrival jitter. */
 .meter {
   position: relative;
   flex: 1;
-  height: 8px;
-  background: var(--panel-recess);
-  border-radius: 1px;
-  box-shadow: var(--bevel-down);
+  height: 4px;
+  background: var(--surface-2);
+  border-radius: 2px;
   overflow: hidden;
 }
 
-/* Scaled, not resized: animating width would relayout on every telemetry tick, and
-   these two bars update five times a second for every station in the room. */
 .meter i {
   position: absolute;
   left: 0;
+  top: 0;
   width: 100%;
-  height: 3px;
+  height: 100%;
   display: block;
   transform-origin: left center;
   transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .meter .fresh {
-  top: 1px;
-  background: var(--ink-2);
+  background: var(--text);
+  opacity: 0.55;
 }
 
 .meter .jitter {
-  bottom: 1px;
   background: var(--caution);
+  height: 2px;
+  top: auto;
+  bottom: 0;
 }
 
 .station .age {
-  font: 400 10px/1 'Azeret Mono', monospace;
-  color: var(--ink-2);
-  width: 46px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-2);
+  width: 44px;
   text-align: right;
 }
 
 .station .score {
-  font: 700 11px/1 'Azeret Mono', monospace;
-  color: var(--ink);
+  font-family: var(--mono);
+  font-size: 11px;
   min-width: 14px;
   text-align: right;
 }
 
 .roster-empty {
-  padding: 16px;
-  color: var(--ink-2);
-  font-size: 11px;
-  line-height: 1.55;
-  border-bottom: 1px solid rgba(139, 144, 130, 0.45);
+  padding: 8px 8px 12px;
+  color: var(--text-2);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
+.roster-empty code {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.roster-fill {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ---------------------------------------------------------------- legend */
+
 .plot-key {
-  border-top: 1px solid var(--seam);
-  flex-shrink: 0;
-  box-shadow: inset 0 1px 0 var(--seam-light);
+  border-top: 1px solid var(--border);
   padding: 12px 16px 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.plot-key > .placard {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
 }
 
 .plot-key dl {
@@ -570,51 +530,34 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  font: 600 10px/1 'Azeret Mono', monospace;
-  letter-spacing: 0.05em;
-  color: var(--ink);
-  width: 76px;
+  font-size: 11px;
+  font-weight: 500;
+  width: 84px;
   flex-shrink: 0;
 }
 
 .plot-key dt svg {
-  color: var(--ink-2);
+  color: var(--text-2);
   flex-shrink: 0;
 }
 
-.plot-key dd {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--ink-2);
-}
-
+.plot-key dd,
 .plot-key p {
   margin: 0;
   font-size: 11px;
-  line-height: 1.35;
-  color: var(--ink-2);
+  line-height: 1.4;
+  color: var(--text-2);
 }
 
-/* Recessed ground drops --ink-2 to 3.50:1, under this file's own floor, so inset code
-   takes full ink (7.15:1). The recess is the reason, not an exception to the rule. */
-.roster-empty code {
-  font: 500 11px/1 'Azeret Mono', monospace;
-  color: var(--ink);
-  background: var(--panel-recess);
-  padding: 2px 5px;
-  border-radius: 2px;
-  box-shadow: var(--bevel-down);
-}
-
-/* ---------------------------------------------------------- bottom rail */
+/* ---------------------------------------------------------- bottom bar */
 
 .rail-bottom {
   grid-area: bottom;
   display: flex;
   align-items: stretch;
-  border-top: 1px solid var(--seam);
-  box-shadow: inset 0 1px 0 var(--seam-light);
+  gap: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
   overflow-x: auto;
 }
 
@@ -622,8 +565,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 11px 16px 13px;
-  border-right: 1px solid var(--seam);
+  padding: 12px 18px 14px;
+  border-right: 1px solid var(--border);
   min-width: 0;
 }
 
@@ -634,70 +577,74 @@ body {
 .group-head {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
 }
 
 .group-head .glyph {
-  color: var(--ink-3);
+  display: none;
 }
 
-/* Readings sit inside the group that governs them, printed exactly once. */
+.group-head .placard {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+
 .dials {
   display: flex;
-  gap: 14px;
+  gap: 16px;
 }
 
 .dial {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 
 .dial .v {
-  font: 500 15px/1.1 'Azeret Mono', monospace;
+  font-family: var(--mono);
+  font-size: 13px;
   white-space: nowrap;
-  font-variant-numeric: tabular-nums;
 }
 
 .dial .v small {
-  font-size: 10px;
-  color: var(--ink-2);
+  font-size: 11px;
+  color: var(--text-2);
   margin-left: 2px;
+  font-family: var(--font);
 }
 
 .controls {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  gap: 6px;
+}
+
+.placard.sub {
+  margin-top: 4px;
+}
+
+.placard.sub::after {
+  display: none;
 }
 
 .note {
   margin: 2px 0 0;
   font-size: 11px;
   line-height: 1.4;
-  color: var(--ink-2);
-  max-width: 32ch;
+  color: var(--text-2);
+  max-width: 34ch;
 }
 
-/* Sub-placard: separates the injected impairment set from the measured readings above it. */
-.placard.sub {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--ink-2);
-  margin-top: 2px;
+/* Three impairment sliders side by side, so the bar stays one row tall. */
+.sliders-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(120px, 1fr));
+  gap: 6px 16px;
 }
 
-.placard.sub::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--seam);
-  opacity: 0.55;
-}
-
-/* ----------------------------------------------------------- switches */
+/* ----------------------------------------------------------- toggles */
 
 .switch {
   display: inline-flex;
@@ -714,37 +661,34 @@ body {
   height: 0;
 }
 
-/* A rocker: recessed well, raised paddle, throw indicated by position. */
 .switch .rocker {
   position: relative;
-  width: 34px;
+  width: 28px;
   height: 16px;
-  background: var(--panel-recess);
-  border: 1px solid var(--seam);
-  border-radius: 2px;
-  box-shadow: var(--bevel-down);
+  background: var(--border-strong);
+  border-radius: 999px;
   flex-shrink: 0;
+  transition: background-color 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .switch .rocker::after {
   content: '';
   position: absolute;
-  top: 1px;
-  left: 1px;
-  width: 15px;
+  top: 2px;
+  left: 2px;
+  width: 12px;
   height: 12px;
-  background: linear-gradient(180deg, var(--panel-lit), var(--panel-deep));
-  border: 1px solid var(--seam);
-  border-radius: 1px;
+  background: var(--surface);
+  border-radius: 50%;
   transition: transform 160ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.switch input:checked + .rocker::after {
-  transform: translateX(15px);
+.switch input:checked + .rocker {
+  background: var(--accent);
 }
 
-.switch input:checked + .rocker {
-  background: var(--rocker-live);
+.switch input:checked + .rocker::after {
+  transform: translateX(12px);
 }
 
 .switch input:focus-visible + .rocker {
@@ -753,49 +697,37 @@ body {
 }
 
 .switch .label {
-  font: 600 10px/1.2 'Archivo Narrow', sans-serif;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ink);
-  text-shadow: var(--engrave);
-}
-
-.switch.is-disabled {
-  cursor: not-allowed;
-}
-
-.switch.is-disabled .label {
-  color: var(--ink-2);
+  font-size: 12px;
+  color: var(--text);
 }
 
 /* ------------------------------------------------------------- sliders */
 
-/* Placard and readout on one line, the track full width beneath: a long placard can
-   never run into its own slider, at any width. */
 .slide {
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: baseline;
-  gap: 3px 10px;
+  gap: 2px 10px;
 }
 
 .slide > .placard {
   grid-column: 1;
+  font-size: 12px;
+  color: var(--text);
 }
 
 .slide output {
   grid-column: 2;
-  font: 500 11px/1 'Azeret Mono', monospace;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
   text-align: right;
-  color: var(--ink-2);
-  font-variant-numeric: tabular-nums;
 }
 
 .slide input[type='range'] {
   grid-column: 1 / -1;
 }
 
-/* A locked control looks locked all the way across, not just at the track. */
 .slide.is-disabled > .placard,
 .slide.is-disabled output {
   opacity: 0.45;
@@ -805,60 +737,43 @@ input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 16px;
-  cursor: grab;
+  height: 14px;
   margin: 0;
-  /* Graduations scored into the panel behind the track. */
-  background: repeating-linear-gradient(
-      90deg,
-      var(--seam) 0 1px,
-      transparent 1px 10%
-    )
-    bottom / 100% 4px no-repeat;
-}
-
-input[type='range']:active {
-  cursor: grabbing;
+  background: transparent;
+  cursor: pointer;
 }
 
 input[type='range']::-webkit-slider-runnable-track {
-  height: 6px;
-  background: var(--panel-recess);
-  border: 1px solid var(--seam);
-  border-radius: 1px;
-  box-shadow: var(--bevel-down);
+  height: 3px;
+  background: var(--border-strong);
+  border-radius: 2px;
 }
 
 input[type='range']::-moz-range-track {
-  height: 6px;
-  background: var(--panel-recess);
-  border: 1px solid var(--seam);
-  border-radius: 1px;
-  box-shadow: var(--bevel-down);
+  height: 3px;
+  background: var(--border-strong);
+  border-radius: 2px;
 }
 
-/* A knurled slide knob, not a dot. */
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 11px;
-  height: 18px;
-  margin-top: -7px;
-  border-radius: 2px;
-  border: 1px solid var(--seam);
-  background:
-    repeating-linear-gradient(90deg, var(--knurl) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, var(--panel-lit), var(--panel-deep));
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 2px var(--shadow-thumb);
 }
 
 input[type='range']::-moz-range-thumb {
-  width: 11px;
-  height: 18px;
-  border-radius: 2px;
-  border: 1px solid var(--seam);
-  background:
-    repeating-linear-gradient(90deg, var(--knurl) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, var(--panel-lit), var(--panel-deep));
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 2px var(--shadow-thumb);
 }
 
 input[type='range']:disabled {
@@ -866,116 +781,146 @@ input[type='range']:disabled {
   opacity: 0.45;
 }
 
-/* ------------------------------------------------------ reaction keys */
+/* ------------------------------------------------------------- buttons */
 
 .keys {
   display: flex;
-  gap: 5px;
+  gap: 4px;
 }
 
 .key {
   position: relative;
-  width: 33px;
+  width: 32px;
   height: 30px;
   padding: 0;
   font-size: 15px;
   line-height: 1;
-  background: linear-gradient(180deg, var(--panel-lit), var(--panel-deep));
-  border: 1px solid var(--seam);
-  border-radius: 2px;
-  box-shadow: var(--bevel-up);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   cursor: pointer;
   display: grid;
   place-items: center;
+  color: var(--text);
+  transition: background-color 120ms, border-color 120ms;
 }
 
 .key:hover {
-  background: linear-gradient(180deg, var(--key-hover), var(--panel));
+  background: var(--surface-2);
 }
 
 .key[aria-pressed='true'] {
-  background: var(--panel-recess);
-  box-shadow: var(--bevel-down);
+  border-color: var(--accent);
+  background: var(--surface-2);
 }
 
-/* The armed key is marked by an engraved index, not by colour alone. */
 .key[aria-pressed='true']::after {
-  content: '';
-  position: absolute;
-  bottom: 2px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 12px;
-  height: 2px;
-  background: var(--nogo);
-  border-radius: 1px;
+  display: none;
 }
 
 .key .idx {
   position: absolute;
   top: 1px;
-  right: 3px;
-  font: 500 8px/1 'Azeret Mono', monospace;
-  color: var(--ink-2);
+  right: 4px;
+  font-family: var(--mono);
+  font-size: 8px;
+  color: var(--text-2);
 }
 
-/* ------------------------------------------------------- guarded switch */
+.key.wide {
+  width: 100%;
+  height: 36px;
+  font: 500 13px/1 var(--font);
+  background: var(--accent);
+  color: var(--surface);
+  border-color: var(--accent);
+}
+
+.key.wide:hover {
+  background: var(--accent-hover);
+}
+
+.key.wide.secondary {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.key.wide.secondary:hover {
+  background: var(--surface-2);
+}
 
 .guarded {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 6px 11px 6px 8px;
-  background: linear-gradient(180deg, var(--guard-face-lit), var(--guard-face));
-  border: 1px solid var(--guard-edge);
-  border-radius: 2px;
-  box-shadow: var(--bevel-up);
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
   cursor: pointer;
-  color: var(--guard-ink);
-  font: 700 10px/1 'Archivo Narrow', sans-serif;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  color: var(--nogo-text);
+  font: 500 12px/1 var(--font);
+  align-self: flex-start;
+  transition: background-color 120ms, border-color 120ms;
 }
 
 .guarded:hover {
-  background: linear-gradient(180deg, var(--guard-face-hover-lit), var(--guard-face-hover));
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
 }
 
-.guarded:active {
-  box-shadow: var(--bevel-down);
+.guarded svg {
+  width: 14px;
+  height: 14px;
 }
 
-/* ------------------------------------------------------------- annunciator */
+/* --------------------------------------------------------------- tally */
+
+.tally {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tally .key {
+  width: 30px;
+  font-family: var(--mono);
+  font-size: 15px;
+}
+
+.tally-value {
+  min-width: 48px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* ------------------------------------------------------------- toast */
 
 .annunciator {
   position: absolute;
   left: 50%;
-  bottom: 18px;
+  bottom: 16px;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 8px 14px;
-  background: rgba(10, 14, 12, 0.92);
-  border: 1px solid var(--glass-rule);
-  border-radius: 2px;
-  color: var(--glass-ink);
-  font: 600 11px/1 'Azeret Mono', monospace;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  gap: 8px;
+  padding: 7px 12px;
+  background: var(--text);
+  color: var(--surface);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
   pointer-events: none;
-  animation: annunciate 240ms cubic-bezier(0.16, 1, 0.3, 1);
+  animation: annunciate 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.annunciator[data-tone='go'] {
-  border-color: var(--go);
-  color: var(--annunciate-go);
-}
-
-.annunciator[data-tone='caution'] {
-  border-color: var(--caution);
-  color: var(--annunciate-caution);
+.annunciator .lamp {
+  width: 6px;
+  height: 6px;
 }
 
 @keyframes annunciate {
@@ -992,34 +937,161 @@ input[type='range']:disabled {
   inset: 0;
   display: grid;
   place-content: center;
-  gap: 8px;
+  gap: 4px;
   justify-items: center;
-  background: rgba(10, 14, 12, 0.82);
-  color: var(--glass-ink-2);
-  font: var(--placard);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  background: var(--overlay);
+  color: var(--text-2);
+  font-size: 12px;
   text-align: center;
   pointer-events: none;
 }
 
 .glass-overlay strong {
-  color: var(--glass-ink);
-  font: 600 12px/1.4 'Azeret Mono', monospace;
-  letter-spacing: 0.08em;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ------------------------------------------------------------------ lobby */
+
+.lobby {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg);
+  overflow-y: auto;
+}
+
+.lobby-face {
+  width: min(440px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px var(--shadow-card), 0 8px 24px var(--shadow-card);
+  padding: 28px 28px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.lobby-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lobby-head > .placard {
+  display: none;
+}
+
+.lobby-head h1 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.lobby-head p {
+  margin: 2px 0 0;
+  color: var(--text-2);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field > .placard {
+  font-size: 12px;
+  color: var(--text);
+  font-weight: 500;
+}
+
+.field input {
+  font: 14px/1.3 var(--font);
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  width: 100%;
+  min-width: 0;
+  transition: border-color 120ms;
+}
+
+.field input:hover {
+  border-color: var(--border-hover);
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px var(--focus-glow);
+}
+
+.field input::placeholder {
+  color: var(--text-2);
+}
+
+.field input[aria-invalid='true'] {
+  border-color: var(--nogo);
+}
+
+.field .note {
+  margin: 0;
+}
+
+.field-error {
+  font-size: 12px;
+}
+
+.lobby-bays {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.bay-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The buttons say what each block does; a heading above them would say it twice. */
+.bay-card .group-head,
+.bay-card p {
+  display: none;
+}
+
+/* "or" divider between the two actions. */
+.lobby-bays form::before {
+  content: 'or';
+  display: block;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-2);
+  margin-bottom: 4px;
+}
+
+.lobby-foot {
+  text-align: center;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-2);
 }
 
 /* ----------------------------------------------------------- responsive */
 
 @media (max-width: 1180px) {
   .console {
-    grid-template-columns: minmax(0, 1fr) 262px;
+    grid-template-columns: minmax(0, 1fr) 248px;
   }
-  .matrix-cell {
-    min-width: 0;
-    padding: 10px 12px;
-  }
-  .matrix-cell .glyph {
+  .matrix-cell .placard {
     display: none;
   }
 }
@@ -1040,231 +1112,44 @@ input[type='range']:disabled {
     min-height: 100%;
   }
   .rail-top {
+    height: auto;
     flex-wrap: wrap;
+    padding: 10px 16px;
+    gap: 10px 16px;
   }
-  .nameplate {
-    border-right: 0;
-  }
-  /* Four cells will not fit a phone in one row; two by two, and nothing clipped. */
   .matrix {
     width: 100%;
     margin-left: 0;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    border-top: 1px solid var(--seam);
-  }
-  .matrix-cell {
-    justify-content: flex-start;
-    border-left: 0;
-    border-right: 1px solid var(--seam);
-    border-bottom: 1px solid var(--seam);
-  }
-  .matrix-cell:nth-child(2n) {
-    border-right: 0;
-  }
-  .matrix-cell:nth-last-child(-n + 2) {
-    border-bottom: 0;
+    flex-wrap: wrap;
   }
   .roster {
     border-left: 0;
-    border-top: 1px solid var(--seam);
-    box-shadow: inset 0 1px 0 var(--seam-light);
+    border-top: 1px solid var(--border);
   }
   .rail-bottom {
     flex-wrap: wrap;
   }
   .group {
-    flex: 1 1 260px;
+    flex: 1 1 240px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sliders-row {
+    grid-template-columns: 1fr;
   }
 }
 
-/* Chrome stops moving; remote cursors do not, because their motion is the product. */
 @media (prefers-reduced-motion: reduce) {
+  .switch .rocker,
   .switch .rocker::after,
   .meter i,
   .lamp,
   .matrix-cell .state,
-  .station .track {
+  .station .track,
+  .key,
+  .guarded {
     transition: none;
   }
-
   .annunciator {
     animation: none;
   }
-}
-
-/* ------------------------------------------------------------------ lobby */
-
-/* Pre-flight. Same face, one panel, centred; the console's own vocabulary throughout. */
-.lobby {
-  min-height: 100%;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
-    linear-gradient(180deg, var(--panel-lit), var(--panel));
-  overflow-y: auto;
-}
-
-.lobby-face {
-  width: min(680px, 100%);
-  background: var(--panel);
-  border: 1px solid var(--seam);
-  border-radius: 3px;
-  box-shadow: var(--bevel-up);
-  padding: 26px 28px 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.lobby-head {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--seam);
-}
-
-.lobby-head h1 {
-  margin: 2px 0 0;
-  font: 700 22px/1.15 'Archivo Narrow', 'Arial Narrow', sans-serif;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  text-shadow: var(--engrave);
-}
-
-.lobby-head p {
-  margin: 4px 0 0;
-  max-width: 56ch;
-  color: var(--ink-2);
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-/* Inputs are recessed wells, like every other control that accepts a value. */
-.field input {
-  font: 500 15px/1.2 'Azeret Mono', ui-monospace, monospace;
-  letter-spacing: 0.02em;
-  color: var(--ink);
-  background: var(--panel-recess);
-  border: 1px solid var(--seam);
-  border-radius: 2px;
-  box-shadow: var(--bevel-down);
-  padding: 9px 11px;
-  width: 100%;
-  min-width: 0;
-}
-
-.field input::placeholder {
-  color: var(--ink-recess);
-  opacity: 1;
-}
-
-.field input[aria-invalid='true'] {
-  border-color: var(--nogo);
-}
-
-.field-error {
-  font: 600 11px/1.3 'Archivo Narrow', sans-serif;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.lobby-bays {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
-
-.bay-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px 15px 15px;
-  border: 1px solid var(--seam);
-  border-radius: 2px;
-  box-shadow: var(--bevel-up);
-  background: var(--panel-lit);
-}
-
-.bay-card p {
-  margin: 0;
-  color: var(--ink-2);
-  font-size: 13px;
-  line-height: 1.45;
-  flex: 1;
-}
-
-.key.wide {
-  width: 100%;
-  height: 36px;
-  font: 700 11px/1 'Archivo Narrow', sans-serif;
-  letter-spacing: 0.11em;
-  text-transform: uppercase;
-  color: var(--ink);
-  text-shadow: var(--engrave);
-}
-
-.lobby-foot {
-  text-align: center;
-  padding-top: 14px;
-  border-top: 1px solid var(--seam);
-}
-
-@media (max-width: 640px) {
-  .lobby-bays {
-    grid-template-columns: 1fr;
-  }
-  .lobby-face {
-    padding: 20px 18px 16px;
-  }
-}
-
-/* ------------------------------------------------------- leave / tally */
-
-/* An engraved text control beside the room designation. Not a lamp, not a key. */
-.designation .leave {
-  align-self: flex-start;
-  margin-top: 2px;
-  padding: 0;
-  background: none;
-  border: 0;
-  border-bottom: 1px solid var(--seam);
-  font: 600 10px/1.4 'Archivo Narrow', sans-serif;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: var(--ink-2);
-  cursor: pointer;
-}
-
-.designation .leave:hover {
-  color: var(--ink);
-  border-bottom-color: var(--ink);
-}
-
-.tally {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.tally .key {
-  width: 30px;
-  font: 600 16px/1 'Azeret Mono', monospace;
-}
-
-.tally-value {
-  min-width: 52px;
-  text-align: center;
-  font: 500 22px/1 'Azeret Mono', monospace;
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums;
 }

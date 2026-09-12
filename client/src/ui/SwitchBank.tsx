@@ -40,15 +40,16 @@ export function SwitchBank(props: SwitchBankProps): ReactElement {
 
   return (
     <section className="rail-bottom" aria-label="Console controls">
-      <Group title="Link" glyph={<IconLink className="glyph" />}>
+      <Group title="Connection" glyph={<IconLink className="glyph" />}>
         <div className="dials">
-          <Dial label="RTT" value={stats ? Math.round(stats.rttMs) : '—'} unit="ms" />
+          <Dial label="Latency" value={stats ? Math.round(stats.rttMs) : '—'} unit="ms" />
           <Dial label="Jitter" value={stats ? Math.round(stats.jitterMs) : '—'} unit="ms" />
         </div>
         <div className="controls">
-          <span className="placard sub">Impair inbound</span>
+          <span className="placard sub">Simulate a bad connection</span>
+          <div className="sliders-row">
           <Slide
-            label="Latency"
+            label="Add latency"
             value={props.emulation.latencyMs}
             max={600}
             step={10}
@@ -56,7 +57,7 @@ export function SwitchBank(props: SwitchBankProps): ReactElement {
             onChange={(v) => props.onEmulation({ latencyMs: v })}
           />
           <Slide
-            label="Jitter"
+            label="Add jitter"
             value={props.emulation.jitterMs}
             max={400}
             step={10}
@@ -64,21 +65,22 @@ export function SwitchBank(props: SwitchBankProps): ReactElement {
             onChange={(v) => props.onEmulation({ jitterMs: v })}
           />
           <Slide
-            label="Loss"
+            label="Drop packets"
             value={Math.round(props.emulation.lossPct * 100)}
             max={50}
             step={1}
             unit="%"
             onChange={(v) => props.onEmulation({ lossPct: v / 100 })}
           />
+          </div>
           <button type="button" className="guarded" onClick={props.onCutLink}>
             <IconCut />
-            Cut link
+            Disconnect
           </button>
         </div>
       </Group>
 
-      <Group title="Buffer" glyph={<IconBuffer className="glyph" />}>
+      <Group title="Smoothing" glyph={<IconBuffer className="glyph" />}>
         <div className="controls">
           <Switch label="Adaptive" checked={props.delayAuto} onChange={props.onDelayAuto} />
           <Slide
@@ -91,18 +93,18 @@ export function SwitchBank(props: SwitchBankProps): ReactElement {
             onChange={props.onDelay}
           />
           <Switch label="Extrapolate" checked={props.extrapolate} onChange={props.onExtrapolate} />
-          <Switch label="Sample marks" checked={props.showDebug} onChange={props.onShowDebug} />
+          <Switch label="Show details" checked={props.showDebug} onChange={props.onShowDebug} />
         </div>
         {/* The explanation belongs on the face, not in an OS tooltip that a touch device
             never shows and a keyboard never reaches. */}
         <p className="note">
           {props.delayAuto
-            ? 'Adaptive: tick × 1.5 + jitter × 2, clamped 60–400 ms.'
-            : 'Manual: stations render this far behind the server clock.'}
+            ? 'Adaptive: tick × 1.5 + jitter × 2, between 60 and 400 ms.'
+            : 'Manual: others are drawn this far behind the server clock.'}
         </p>
       </Group>
 
-      <Group title="Feed" glyph={<IconFeed className="glyph" />}>
+      <Group title="Traffic" glyph={<IconFeed className="glyph" />}>
         <div className="dials">
           {/* Composite readouts damp their numbers and format afterwards, so the whole
               bottom rail settles as one moment instead of half of it easing and half
@@ -121,17 +123,17 @@ export function SwitchBank(props: SwitchBankProps): ReactElement {
             unit="Hz"
           />
           <Dial
-            label="Uplink"
+            label="Sent"
             value={stats ? <Damped n={stats.bytesOut} format={formatBytes} /> : '—'}
           />
           <Dial
-            label="Downlink"
+            label="Received"
             value={stats ? <Damped n={stats.bytesIn} format={formatBytes} /> : '—'}
           />
         </div>
         <div className="dials">
-          <Dial label="Frames in" value={stats?.messagesIn ?? '—'} />
-          <Dial label="Resumes" value={stats?.reconnects ?? '—'} />
+          <Dial label="Messages" value={stats?.messagesIn ?? '—'} />
+          <Dial label="Reconnects" value={stats?.reconnects ?? '—'} />
           <Dial
             label="Dropped"
             value={stats ? stats.rejected + stats.droppedByEmulator : '—'}
@@ -139,7 +141,7 @@ export function SwitchBank(props: SwitchBankProps): ReactElement {
         </div>
       </Group>
 
-      <Group title="Tally" glyph={<IconTally className="glyph" />}>
+      <Group title="Shared counter" glyph={<IconTally className="glyph" />}>
         {/* Server-owned shared state, alongside the relayed kind. Clicks send an intent;
             the number shown is whatever the server last confirmed, damped like every
             other needle on the face. */}
@@ -165,12 +167,12 @@ export function SwitchBank(props: SwitchBankProps): ReactElement {
           </button>
         </div>
         <span className="placard">
-          {props.counterBy ? `Last by ${props.counterBy.toUpperCase()}` : 'Shared by the room'}
+          {props.counterBy ? `Last changed by ${props.counterBy}` : 'Everyone sees the same number'}
         </span>
       </Group>
 
-      <Group title="Transmit" glyph={<IconTransmit className="glyph" />}>
-        <div className="keys" role="group" aria-label="Reaction to transmit">
+      <Group title="Reaction" glyph={<IconTransmit className="glyph" />}>
+        <div className="keys" role="group" aria-label="Reaction to send">
           {REACTIONS.map((emoji, index) => (
             <button
               key={emoji}
@@ -185,7 +187,7 @@ export function SwitchBank(props: SwitchBankProps): ReactElement {
             </button>
           ))}
         </div>
-        <span className="placard">Click the plot to transmit · keys 1–6 arm</span>
+        <span className="placard">Click the canvas to send · press 1–6 to pick</span>
       </Group>
     </section>
   );

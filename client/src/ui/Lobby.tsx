@@ -28,7 +28,7 @@ export function Lobby({ suggestedName, onEnter }: LobbyProps): ReactElement {
     event.preventDefault();
     const roomId = normalizeRoomId(code);
     if (!roomId) {
-      setError('Enter a room code to join.');
+      setError('Enter a room code.');
       return;
     }
     onEnter(roomId, callsign());
@@ -38,16 +38,16 @@ export function Lobby({ suggestedName, onEnter }: LobbyProps): ReactElement {
     <div className="lobby">
       <section className="lobby-face" aria-labelledby="lobby-title">
         <header className="lobby-head">
-          <span className="placard">Pre-flight</span>
-          <h1 id="lobby-title">Check in to a room</h1>
+          <span className="placard">Welcome</span>
+          <h1 id="lobby-title">Join a room</h1>
           <p>
-            Every browser tab is its own station. Open a room and share its code, or join
-            one someone else opened.
+            Every browser tab is its own person. Create a room and share its code, or join
+            one someone else created.
           </p>
         </header>
 
         <label className="field">
-          <span className="placard">Callsign</span>
+          <span className="placard">Your name</span>
           <input
             type="text"
             value={name}
@@ -58,7 +58,7 @@ export function Lobby({ suggestedName, onEnter }: LobbyProps): ReactElement {
             aria-describedby="callsign-note"
           />
           <span className="note" id="callsign-note">
-            Shown beside your cursor. Duplicates in a room get a number.
+            Shown next to your cursor.
           </span>
         </label>
 
@@ -66,18 +66,18 @@ export function Lobby({ suggestedName, onEnter }: LobbyProps): ReactElement {
           <div className="bay-card">
             <div className="group-head">
               <IconTarget className="glyph" />
-              <span className="placard">Open a room</span>
+              <span className="placard">Create a room</span>
             </div>
-            <p>A fresh room with a code you can read out loud.</p>
+            <p>A new room with a short code.</p>
             <button type="button" className="key wide" onClick={open}>
-              Open room
+              Create room
             </button>
           </div>
 
           <form className="bay-card" onSubmit={join}>
             <div className="group-head">
               <IconLink className="glyph" />
-              <span className="placard">Join a room</span>
+              <span className="placard">Join with a code</span>
             </div>
             <label className="field">
               <span className="placard">Room code</span>
@@ -101,14 +101,14 @@ export function Lobby({ suggestedName, onEnter }: LobbyProps): ReactElement {
                 {error}
               </span>
             )}
-            <button type="submit" className="key wide">
-              Join room
+            <button type="submit" className="key wide secondary">
+              Join
             </button>
           </form>
         </div>
 
         <p className="lobby-foot placard">
-          Raw WebSockets · own protocol · own interpolation · no sync libraries
+          Built on raw WebSockets — no sync libraries
         </p>
       </section>
     </div>

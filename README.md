@@ -23,13 +23,13 @@ npm install
 npm run dev
 ```
 
-Then open **http://localhost:5173**. You land on a pre-flight screen: pick a callsign, then
-**Open room** (generates a code like `k7r-4mq`) or **Join room** with a code someone gave
-you. Open the same room in 3–5 tabs — each browser tab is an independent client (identity
-lives in `sessionStorage`, which is per-tab), so tabs behave exactly like separate devices.
+Then open **http://localhost:5173**. Enter a name, then **Create room** (generates a code
+like `k7r-4mq`) or **Join** with a code someone gave you. Open the same room in 3–5 tabs —
+each browser tab is an independent client (identity lives in `sessionStorage`, which is
+per-tab), so tabs behave exactly like separate devices.
 
 - A room's URL is shareable: `http://localhost:5173/?room=k7r-4mq` skips the lobby.
-- Room codes are case-insensitive. Your callsign stays in the tab, not the URL.
+- Room codes are case-insensitive. Your name stays in the tab, not the URL.
 
 `npm run dev` starts the sync server on **:8787** and the Vite dev server on **:5173**.
 To run them separately: `npm run dev:server` / `npm run dev:client`.
@@ -59,38 +59,33 @@ npm run typecheck
 
 ## Try this (the 3-minute tour)
 
-The interface is a mission-control console: the shared canvas is the room's front screen
-(the **plot**, inside the dark bezel), everyone in the room is a **station**, and every
-switch on the face sits beside the reading it changes.
-
 1. **Multi-client.** Open 4 tabs, wave the mouse around in each. Every tab draws every
-   other station as a tracked symbol with a leader line and a data block, and lists them
-   under **ON STATION**.
-2. **Reactions.** Click the plot to transmit a burst; press `1`–`6` to arm a different
-   one. Your own burst appears instantly (optimistic), everyone else's arrives over the
-   wire.
-3. **Contested taps.** Two tabs race for the **ACQUIRE** reticle. Exactly one scores; the
-   loser is told *"beaten to it — ordered by capture time"*. Resolution happens on the
-   server, by capture time, not by who arrived first.
-4. **Degrade the network.** In the **LINK** group, drag *Latency* to 300ms and *Jitter* to
-   250ms. The whole face moves together: the BUFFER lamp swings from NOMINAL to COASTING,
-   stations step from TRACK to COAST, the *Render delay* slider climbs on its own from
-   ~78ms to ~280ms, and *Rate* drops from 30/20Hz to 24/14Hz — while the plot stays
-   smooth. Chrome DevTools → Network → throttling works too, and is the more honest test.
-5. **Break interpolation on purpose.** In **BUFFER**, throw *Adaptive* off, drag *Render
-   delay* to 0, and throw *Extrapolate* off. Stations now step at the 20Hz tick rate.
-   That is the naive implementation, and the difference is the whole point of the module.
-6. **Kill the connection.** Throw **CUT LINK**. Other tabs mark your station LOST and dim
-   it immediately; you reconnect within ~1s and resume the *same seat* — same colour, same
-   peer id, no duplicate station. Reloading a tab (⌘R) does the same thing.
-7. **Close a tab.** Your station disappears from the other tabs at once. No zombies.
-8. **The tally.** Two tabs click `+` at the same instant: both faces read 2, not 1. The
+   other cursor with a name chip, and lists everyone under **People**.
+2. **Reactions.** Click the canvas to send an emoji; press `1`–`6` to pick a different
+   one. Your own appears instantly (optimistic), everyone else's arrives over the wire.
+3. **Contested taps.** Two tabs race to click the **Tap me** ring. Exactly one scores; the
+   loser is told *"just missed — someone tapped first"*. Resolution happens on the server,
+   by capture time, not by who arrived first.
+4. **Degrade the network.** Under **Connection**, drag *Add latency* to 300ms and *Add
+   jitter* to 250ms. Everything moves together: the Connection pill goes from *Good* to
+   *Slow*, Smoothing from *Smooth* to *Predicting*, cursors' chip dots go hollow, the
+   *Render delay* slider climbs on its own from ~80ms to ~280ms, and the send rate drops
+   from 30/20Hz to 24/14Hz — while the cursors stay smooth. Chrome DevTools → Network →
+   throttling works too, and is the more honest test.
+5. **Break interpolation on purpose.** Under **Smoothing**, turn *Adaptive* off, drag
+   *Render delay* to 0, and turn *Extrapolate* off. Cursors now step at the 20Hz tick
+   rate. That is the naive implementation, and the difference is the whole point.
+6. **Kill the connection.** Click **Disconnect**. Other tabs mark you *Reconnecting* and
+   dim your cursor; you reconnect within ~1s and resume the *same seat* — same colour, same
+   peer id, no duplicate cursor. Reloading a tab (⌘R) does the same thing.
+7. **Close a tab.** Your cursor disappears from the other tabs at once. No zombies.
+8. **The shared counter.** Two tabs click `+` at the same instant: both read 2, not 1. The
    server owns the number; clicks are *intents* it applies in arrival order. Open a third
    tab — it joins showing the live value, not zero.
 
-The **PLOT KEY** at the foot of the roster explains the symbology: TRACK is drawn between
-two known samples, COAST is projected from the last velocity, HOLD is starved past the
-projection budget, IDLE is connected but not moving.
+The **Cursor states** legend under the people list explains the words: *Smooth* is drawn
+between two known positions, *Predicting* is projected from the last velocity, *Stalled*
+is waiting past the prediction limit, *Idle* is connected but not moving.
 
 ---
 
@@ -271,11 +266,11 @@ The distinction that matters is whether the peer completed the WebSocket close h
 | Network died, laptop slept, cable pulled | socket error/FIN with **no** close frame ⇒ 1006 | marked offline **immediately** (`pres`), seat held **5s** for resume, then `leave` |
 | Half-open TCP (no packets at all) | heartbeat: WS ping every 10s, no traffic for 25s | connection closed, then the above |
 
-So a station is gone within **~5s** worst case for a dropped connection and
-**immediately** for a clean exit. Nothing lingers indefinitely. A station inside the grace
-window is drawn dimmed and marked LOST rather than pretending it is live — and a station
-that simply stopped moving is marked IDLE, not treated as a fault, because an instrument
-that cries wolf is worse than no instrument.
+So a cursor is gone within **~5s** worst case for a dropped connection and **immediately**
+for a clean exit. Nothing lingers indefinitely. A cursor inside the grace window is drawn
+dimmed and marked *Reconnecting* rather than pretending it is live — and one that simply
+stopped moving is marked *Idle*, not treated as a fault, because an indicator that cries
+wolf is worse than none.
 
 ### Reconnect
 
@@ -370,11 +365,11 @@ server instances (see scaling, below).
 - **Extrapolation** with bounded, decaying velocity (above).
 - **Adaptive throttling** from measured RTT (above).
 - **Conflict reconciliation** for simultaneous taps (above).
-- **Per-client latency/jitter visualisation** — every station in the roster carries its
-  tracking state (TRACK / COAST / HOLD / IDLE / LOST), a freshness bar over an
-  arrival-jitter bar, and ms since its last update actually landed.
-- **In-page network emulator** — inbound latency, jitter and loss sliders, plus CUT LINK,
-  so the failure paths can be demoed without DevTools.
+- **Per-client latency/jitter visualisation** — every person in the list carries their
+  cursor state (Smooth / Predicting / Stalled / Idle / Reconnecting), a freshness bar with
+  arrival jitter beneath, and ms since their last update actually landed.
+- **In-page network emulator** — add latency, add jitter and drop packets sliders, plus a
+  Disconnect button, so the failure paths can be demoed without DevTools.
 - **Horizontal scaling discussion** — below.
 
 ---
@@ -517,14 +512,14 @@ being throttled — falsifying the one behaviour the console exists to demonstra
 │   ├── net/room.ts           # createRoom(): batching, peer state, timeline
 │   ├── net/clock.ts          # server-clock estimation
 │   ├── interpolation.ts      # buffering, lerp, bounded extrapolation
-│   ├── render.ts             # the plot: graticule, tracked symbols, bursts
-│   ├── styles.css            # the console world
-│   ├── ui/console.ts         # engine state -> console vocabulary + GO/NO-GO matrix
+│   ├── render.ts             # the canvas: dot grid, cursors, name chips, bursts
+│   ├── styles.css            # the design system (tokens in :root)
+│   ├── ui/console.ts         # engine state -> plain words + the four status pills
 │   ├── ui/icons.tsx          # authored SVG icon set, one stroke weight
-│   ├── ui/TopRail.tsx        # designation, mission clock, status matrix
-│   ├── ui/Roster.tsx         # stations on console + plot key
-│   ├── ui/SwitchBank.tsx     # the switch bank, grouped by subsystem
-│   ├── ui/Lobby.tsx          # pre-flight: callsign, open or join a room
+│   ├── ui/TopRail.tsx        # room, session time, status pills
+│   ├── ui/Roster.tsx         # people list + cursor-state legend
+│   ├── ui/SwitchBank.tsx     # the control bar, grouped by what each governs
+│   ├── ui/Lobby.tsx          # name, create or join a room
 │   ├── ui/RoomConsole.tsx    # one room, live
 │   └── App.tsx               # lobby or console, decided by the address
 ├── tests/                    # 39 tests incl. end-to-end multi-client

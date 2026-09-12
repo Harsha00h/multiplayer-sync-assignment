@@ -109,9 +109,9 @@ export function RoomConsole({ roomId, clientId, name, onLeave }: RoomConsoleProp
       const me = room.getSelf();
       if (!me) return;
       if (next.heldBy === me.pid) {
-        setAnnunciation({ text: 'Target acquired', tone: 'go' });
+        setAnnunciation({ text: 'You got it', tone: 'go' });
       } else if (lost.includes(me.pid)) {
-        setAnnunciation({ text: 'Beaten to it — ordered by capture time', tone: 'caution' });
+        setAnnunciation({ text: 'Just missed — someone tapped first', tone: 'caution' });
       }
     });
 
@@ -262,7 +262,7 @@ export function RoomConsole({ roomId, clientId, name, onLeave }: RoomConsoleProp
 
   const cutLink = useCallback(() => {
     roomRef.current?.simulateDrop();
-    setAnnunciation({ text: 'Link cut — reacquiring', tone: 'caution' });
+    setAnnunciation({ text: 'Disconnected — reconnecting', tone: 'caution' });
   }, []);
 
   const tally = useCallback((delta: 1 | -1) => {
@@ -309,10 +309,10 @@ export function RoomConsole({ roomId, clientId, name, onLeave }: RoomConsoleProp
         </div>
 
         <p className="imperative">
-          <span>Move to transmit · click to react · take the target</span>
+          <span>Move to share your cursor · click to react · tap the target</span>
           <span className="rule" />
           <strong>
-            <span aria-hidden>{REACTIONS[reaction]}</span> armed
+            <span aria-hidden>{REACTIONS[reaction]}</span> selected
           </strong>
         </p>
       </div>
@@ -354,13 +354,13 @@ export function RoomConsole({ roomId, clientId, name, onLeave }: RoomConsoleProp
 /** The glass says what is wrong with the link, in the console's own voice. */
 function describeOverlay(stats: RoomStats | null): { title: string; detail: string } | null {
   if (!stats || stats.status === 'connecting') {
-    return { title: 'Acquiring link', detail: 'Opening the socket' };
+    return { title: 'Connecting', detail: 'Opening the connection' };
   }
   if (stats.status === 'reconnecting') {
-    return { title: 'Signal lost', detail: stats.statusDetail };
+    return { title: 'Reconnecting', detail: stats.statusDetail };
   }
   if (stats.status === 'closed') {
-    return { title: 'Link down', detail: stats.statusDetail };
+    return { title: 'Offline', detail: stats.statusDetail };
   }
   return null;
 }
