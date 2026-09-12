@@ -293,6 +293,64 @@ test('simultaneous taps on the target are resolved deterministically', async () 
   b.close();
 });
 
+test('the shared tally is server-owned: simultaneous clicks both count, and joiners get the value', async () => {
+  const room = `r-${Date.now()}-l`;
+  const a = await TestClient.connect(PORT);
+  a.send(hello('alice', room));
+  const welcomeA = await a.waitFor('welcome');
+  assert.equal(welcomeA.counter, 0, 'a fresh room starts at zero');
+
+  const b = await TestClient.connect(PORT);
+  b.send(hello('bob', room));
+  const welcomeB = await b.waitFor('welcome');
+  await a.waitFor('join');
+
+  // Two "simultaneous" clicks: neither client knows about the other's. A naive
+  // "send the new total" design would have both send 1 and lose one. Intents don't.
+  a.send({ t: 'counter', seq: 1, delta: 1 });
+  b.send({ t: 'counter', seq: 1, delta: 1 });
+
+  const final = await a.waitUntil((m) => m.t === 'counterState' && m.value === 2, 2_000);
+  assert.equal(final.t === 'counterState' && final.value, 2, 'both clicks counted');
+
+  // The sender is told too — that echo is the confirmation of its optimistic bump.
+  const aStates = a.received.filter((m) => m.t === 'counterState');
+  assert.ok(
+    aStates.some((m) => m.t === 'counterState' && m.by === welcomeA.you.pid),
+    'sender receives its own counterState',
+  );
+  assert.ok(
+    aStates.some((m) => m.t === 'counterState' && m.by === welcomeB.you.pid),
+    'and the other party\'s',
+  );
+
+  // A retransmitted click (same seq) is idempotent, not double-counted.
+  a.send({ t: 'counter', seq: 1, delta: 1 });
+  await sleep(150);
+  assert.equal(
+    a.received.filter((m) => m.t === 'counterState').length,
+    aStates.length,
+    'duplicate seq produced no new state',
+  );
+
+  // Decrement works and delta is validated.
+  b.send({ t: 'counter', seq: 2, delta: -1 });
+  await a.waitUntil((m) => m.t === 'counterState' && m.value === 1, 2_000);
+  b.sendText(JSON.stringify({ t: 'counter', seq: 3, delta: 1000 }));
+  const err = await b.waitFor('err');
+  assert.match(err.msg, /delta/);
+
+  // A late joiner gets the current value in the snapshot, not zero.
+  const c = await TestClient.connect(PORT);
+  c.send(hello('carol', room));
+  const welcomeC = await c.waitFor('welcome');
+  assert.equal(welcomeC.counter, 1, 'late joiner sees the live tally');
+
+  a.close();
+  b.close();
+  c.close();
+});
+
 test('the room disappears when the last member leaves', async () => {
   const room = `r-${Date.now()}-j`;
   const a = await TestClient.connect(PORT);

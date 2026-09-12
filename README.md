@@ -23,12 +23,13 @@ npm install
 npm run dev
 ```
 
-Then open **http://localhost:5173** in 3–5 tabs. Each browser tab is an independent
-client (identity lives in `sessionStorage`, which is per-tab), so tabs behave exactly like
-separate devices.
+Then open **http://localhost:5173**. You land on a pre-flight screen: pick a callsign, then
+**Open room** (generates a code like `k7r-4mq`) or **Join room** with a code someone gave
+you. Open the same room in 3–5 tabs — each browser tab is an independent client (identity
+lives in `sessionStorage`, which is per-tab), so tabs behave exactly like separate devices.
 
-- Different room: `http://localhost:5173/?room=my-room`
-- Custom name: `http://localhost:5173/?name=alice`
+- A room's URL is shareable: `http://localhost:5173/?room=k7r-4mq` skips the lobby.
+- Room codes are case-insensitive. Your callsign stays in the tab, not the URL.
 
 `npm run dev` starts the sync server on **:8787** and the Vite dev server on **:5173**.
 To run them separately: `npm run dev:server` / `npm run dev:client`.
@@ -83,6 +84,9 @@ switch on the face sits beside the reading it changes.
    it immediately; you reconnect within ~1s and resume the *same seat* — same colour, same
    peer id, no duplicate station. Reloading a tab (⌘R) does the same thing.
 7. **Close a tab.** Your station disappears from the other tabs at once. No zombies.
+8. **The tally.** Two tabs click `+` at the same instant: both faces read 2, not 1. The
+   server owns the number; clicks are *intents* it applies in arrival order. Open a third
+   tab — it joins showing the live value, not zero.
 
 The **PLOT KEY** at the foot of the roster explains the symbology: TRACK is drawn between
 two known samples, COAST is projected from the last velocity, HOLD is starved past the
@@ -103,6 +107,7 @@ the two cannot drift apart.
 | `hello` | `{t, v, roomId, clientId, name, token?}` | first frame on every connection; `token` present = "resume my seat" | 116 B |
 | `in` | `{t, seq, s: [[dt, x, y], …]}` | batched cursor samples, ~20/s | 39 B (1 sample) / 54 B (2) |
 | `react` | `{t, seq, dt, x, y, k}` | discrete tap, sent immediately | 53 B |
+| `counter` | `{t, seq, delta}` | a `+1`/`−1` *intent* on the shared tally | 33 B |
 | `ping` | `{t, id, ct}` | RTT/clock probe, every 2s | 38 B |
 | `bye` | `{t}` | voluntary leave; skips the reconnect grace window | 12 B |
 
@@ -117,6 +122,7 @@ the two cannot drift apart.
 | `k` (tick) | `{t, st, seq, c?: [[pid,x,y,age],…], r?: [[pid,x,y,k,age],…]}` | every 50ms, if anything happened | **110 B** (4 peers moving) |
 | `pong` | `{t, id, ct, st}` | reply to `ping` | 57 B |
 | `target` | `{t, st, target, lost?}` | target claimed/moved | ~130 B |
+| `counterState` | `{t, st, value, by}` | the authoritative tally after a change; sent to the sender too, as confirmation | ~50 B |
 | `err` | `{t, code, msg, fatal}` | rejected frame, rate limit, bad version | ~80 B |
 
 ### Three tricks instead of a binary codec
@@ -188,7 +194,7 @@ See [`client/src/net/clock.ts`](client/src/net/clock.ts).
 ### What lives where
 
 **Server owns** (authoritative): membership, `pid` assignment, colours, name uniqueness,
-the event timeline, the tap target and the scoreboard.
+the event timeline, the tap target, the scoreboard, and the shared tally.
 **Server relays**: cursor positions, reaction bursts. It retains only the *latest* cursor
 per member — not a history — purely so a joiner can be handed a snapshot.
 
@@ -341,6 +347,23 @@ they lost** so the UI can show the near-miss instead of silently swallowing the 
 Covered by an integration test that has the *later-arriving* frame win on capture time.
 
 ---
+
+### The shared tally — why it is not a CRDT
+
+Two clients clicking `+1` in the same instant is the textbook lost-update problem: if each
+sent "the counter is now 1", one write would win and a click would vanish. The standard
+answer with a dumb relay is a CRDT — commutative, idempotent operations that merge in any
+order. This project doesn't need one, because it has a coordinator: clients send
+**intents** (`delta: +1`), the server applies them in arrival order, and broadcasts the
+result to everyone *including the sender*. That echo is the confirmation of the sender's
+optimistic bump (or its correction to 2 when someone else clicked too). Late joiners get
+the value in `welcome`. The existing `seq` check makes a retransmitted click idempotent,
+and `delta` is validated to exactly `±1`. Tested end to end.
+
+The trade, stated: authoritative server = simple clients, one point of truth. CRDT = no
+coordinator needed, works offline, more client complexity. With a server tick already in
+the room, the first is the obvious choice; the second is how you'd sync the number *across*
+server instances (see scaling, below).
 
 ## Also implemented from the bonus list
 
@@ -501,7 +524,9 @@ being throttled — falsifying the one behaviour the console exists to demonstra
 │   ├── ui/TopRail.tsx        # designation, mission clock, status matrix
 │   ├── ui/Roster.tsx         # stations on console + plot key
 │   ├── ui/SwitchBank.tsx     # the switch bank, grouped by subsystem
-│   └── App.tsx               # the demo
+│   ├── ui/Lobby.tsx          # pre-flight: callsign, open or join a room
+│   ├── ui/RoomConsole.tsx    # one room, live
+│   └── App.tsx               # lobby or console, decided by the address
 ├── tests/                    # 39 tests incl. end-to-end multi-client
 └── scripts/bench.ts          # the bandwidth numbers above
 ```

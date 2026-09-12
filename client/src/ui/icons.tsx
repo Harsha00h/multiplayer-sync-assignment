@@ -74,6 +74,14 @@ export const IconTarget = (props: IconProps): ReactElement => (
   </svg>
 );
 
+/** Tally: four strokes and a bar. The shared counter's mark. */
+export const IconTally = (props: IconProps): ReactElement => (
+  <svg {...base(props)}>
+    <path d="M4 5v10M7.5 5v10M11 5v10M14.5 5v10" />
+    <path d="M2.5 14.5 17 5.5" />
+  </svg>
+);
+
 /** Transmit: the reaction burst leaving this station. */
 export const IconTransmit = (props: IconProps): ReactElement => (
   <svg {...base(props)}>

@@ -160,12 +160,24 @@ export interface PingMsg {
   ct: number;
 }
 
+/**
+ * A change to the shared tally. This is an *intent* ("add this"), never a value ("it is
+ * now 5"): the server owns the number and applies intents in arrival order, so two
+ * simultaneous clicks both count and nobody's write is lost. No CRDT is needed because
+ * there is exactly one place the truth lives.
+ */
+export interface CounterMsg {
+  t: 'counter';
+  seq: number;
+  delta: 1 | -1;
+}
+
 /** Voluntary leave. Lets the server skip the reconnect grace window. */
 export interface ByeMsg {
   t: 'bye';
 }
 
-export type ClientMessage = HelloMsg | InputMsg | ReactMsg | PingMsg | ByeMsg;
+export type ClientMessage = HelloMsg | InputMsg | ReactMsg | CounterMsg | PingMsg | ByeMsg;
 
 // ---------------------------------------------------------------------------
 // Server -> Client
@@ -185,6 +197,8 @@ export interface WelcomeMsg {
   /** Full room state — this is how a joiner sees existing cursors immediately. */
   peers: PeerSnapshot[];
   target: TargetState;
+  /** The shared tally, so a late joiner never starts from zero. */
+  counter: number;
 }
 
 export interface JoinMsg {
@@ -236,6 +250,19 @@ export interface TargetMsg {
   lost?: Pid[];
 }
 
+/**
+ * The authoritative tally after a change. Sent to everyone *including* the sender: unlike
+ * a cursor echo (useless — you already drew it), this echo is the confirmation that the
+ * sender's optimistic increment was right, or the correction when it was not.
+ */
+export interface CounterStateMsg {
+  t: 'counterState';
+  st: number;
+  value: number;
+  /** Who caused the change. */
+  by: Pid;
+}
+
 export interface ErrorMsg {
   t: 'err';
   code: 'bad_message' | 'bad_version' | 'rate_limit' | 'room_full' | 'internal';
@@ -252,6 +279,7 @@ export type ServerMessage =
   | TickMsg
   | PongMsg
   | TargetMsg
+  | CounterStateMsg
   | ErrorMsg;
 
 // ---------------------------------------------------------------------------
@@ -340,6 +368,13 @@ export function parseClientMessage(raw: unknown): Result<ClientMessage> {
       if (!isReactionKind(data.k)) return err('react.k unknown');
       return ok({ t: 'react', seq, dt, x, y, k: data.k });
     }
+    case 'counter': {
+      const seq = seqOf(data.seq);
+      if (seq === null) return err('counter.seq invalid');
+      // Exactly +1 or -1. A client cannot send delta: 1000000, and a non-integer is not a click.
+      if (data.delta !== 1 && data.delta !== -1) return err('counter.delta must be 1 or -1');
+      return ok({ t: 'counter', seq, delta: data.delta });
+    }
     case 'ping': {
       if (!isFiniteNum(data.id) || !isFiniteNum(data.ct)) return err('ping fields invalid');
       return ok({ t: 'ping', id: data.id, ct: data.ct });
@@ -396,6 +431,7 @@ export function parseServerMessage(raw: unknown): Result<ServerMessage> {
         resumed: data.resumed === true,
         peers,
         target: target.value,
+        counter: isFiniteNum(data.counter) && Number.isInteger(data.counter) ? data.counter : 0,
       });
     }
     case 'join': {
@@ -454,6 +490,11 @@ export function parseServerMessage(raw: unknown): Result<ServerMessage> {
       if (!target.ok) return err(`target: ${target.error}`);
       const lost = Array.isArray(data.lost) ? data.lost.filter(isFiniteNum) : undefined;
       return ok({ t: 'target', st: data.st as number, target: target.value, lost });
+    }
+    case 'counterState': {
+      if (!isFiniteNum(data.value) || !Number.isInteger(data.value)) return err('counterState.value invalid');
+      if (!isFiniteNum(data.by)) return err('counterState.by invalid');
+      return ok({ t: 'counterState', st: data.st as number, value: data.value, by: data.by });
     }
     case 'err': {
       const msg = str(data.msg, 256) ?? 'unknown error';

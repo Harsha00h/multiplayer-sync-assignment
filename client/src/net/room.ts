@@ -40,7 +40,18 @@ export interface ReactionAction {
   kind: number;
 }
 
-export type LocalAction = CursorAction | ReactionAction;
+export interface CounterAction {
+  type: 'counter';
+  delta: 1 | -1;
+}
+
+export type LocalAction = CursorAction | ReactionAction | CounterAction;
+
+export interface CounterState {
+  value: number;
+  /** Pid of whoever last changed it, or null before anyone has. */
+  by: number | null;
+}
 
 export type RemoteAction =
   | (CursorAction & { t: number })
@@ -113,6 +124,7 @@ export class Room {
   private readonly peers = new Map<number, Peer>();
   private self: PeerInfo | null = null;
   private target: TargetState | null = null;
+  private counter: CounterState = { value: 0, by: null };
 
   private status: ConnectionStatus = 'connecting';
   private statusDetail = '';
@@ -134,6 +146,7 @@ export class Room {
   private readonly actionListeners = new Set<(clientId: string, action: RemoteAction) => void>();
   private readonly presenceListeners = new Set<() => void>();
   private readonly targetListeners = new Set<(target: TargetState, lost: number[]) => void>();
+  private readonly counterListeners = new Set<(state: CounterState) => void>();
 
   constructor(private readonly options: RoomOptions) {
     this.delayOverride = options.interpolationDelayMs ?? null;
@@ -170,6 +183,16 @@ export class Room {
    * delay to a tap is a worse trade than the bandwidth it saves.
    */
   sendAction(action: LocalAction): void {
+    if (action.type === 'counter') {
+      // Optimistic: bump locally so the click feels instant, then send the *intent*. The
+      // server's counterState replaces this value rather than adding to it, which is the
+      // reconciliation — if someone else clicked in the same instant, the correction from
+      // +1 to +2 is the server telling the truth.
+      this.counter = { value: this.counter.value + action.delta, by: this.self?.pid ?? null };
+      this.emitCounter();
+      this.connection.send({ t: 'counter', seq: ++this.seq, delta: action.delta });
+      return;
+    }
     if (action.type === 'reaction') {
       this.connection.send({
         t: 'react',
@@ -282,6 +305,8 @@ export class Room {
           this.peers.set(peer.pid, peer);
         }
         this.target = msg.target;
+        this.counter = { value: msg.counter, by: null };
+        this.emitCounter();
         this.emitPresence();
         return;
       }
@@ -353,6 +378,11 @@ export class Room {
         this.emitPresence();
         return;
 
+      case 'counterState':
+        this.counter = { value: msg.value, by: msg.by };
+        this.emitCounter();
+        return;
+
       case 'err':
         console.warn(`[sync] server error (${msg.code}): ${msg.msg}`);
         return;
@@ -370,6 +400,10 @@ export class Room {
     for (const listener of this.presenceListeners) listener();
   }
 
+  private emitCounter(): void {
+    for (const listener of this.counterListeners) listener(this.counter);
+  }
+
   // -- Subscriptions ---------------------------------------------------------
 
   onRemoteAction(listener: (clientId: string, action: RemoteAction) => void): Unsubscribe {
@@ -385,6 +419,11 @@ export class Room {
   onTargetChange(listener: (target: TargetState, lost: number[]) => void): Unsubscribe {
     this.targetListeners.add(listener);
     return () => this.targetListeners.delete(listener);
+  }
+
+  onCounterChange(listener: (state: CounterState) => void): Unsubscribe {
+    this.counterListeners.add(listener);
+    return () => this.counterListeners.delete(listener);
   }
 
   // -- Read models used by rendering ----------------------------------------
@@ -451,6 +490,10 @@ export class Room {
 
   getTarget(): TargetState | null {
     return this.target;
+  }
+
+  getCounter(): CounterState {
+    return this.counter;
   }
 
   getPeers(): Peer[] {

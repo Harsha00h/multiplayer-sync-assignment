@@ -12,6 +12,7 @@ colors:
   ink: "#191c17"
   ink-2: "#4a4f44"
   ink-3: "#646a5c"
+  ink-recess: "#33372f"
   glass: "#0a0e0c"
   glass-rule: "#1d2c24"
   glass-ink: "#cfd8cf"
@@ -235,6 +236,10 @@ not legible as type on the panel: **Go Ink** (`{colors.tone-go}`), **Caution Ink
 - **Rocker Live** (`{colors.rocker-live}`): the well of a thrown rocker switch. A muted,
   desaturated green — deliberately not the GO lamp, because a switch being on is a position,
   not a health verdict.
+
+- **Recess Ink** (`{colors.ink-recess}`): the only ink permitted for text set *on* the
+  recessed well (`{colors.panel-recess}`) — placeholders, inset code. `{colors.ink-2}`
+  reaches just 3.50:1 there; this reaches 5.05:1.
 
 ### Control and material tones
 

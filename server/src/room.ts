@@ -94,6 +94,14 @@ export class Room {
   /** Taps that landed on the target this tick, resolved together at tick time. */
   private pendingClaims: { pid: Pid; st: number }[] = [];
 
+  /**
+   * The shared tally. Server-owned like the target and the scoreboard: clients send +1/-1
+   * intents, the room applies them in arrival order, and everyone — sender included — is
+   * told the result. Simultaneous clicks both count; there is no read-modify-write on any
+   * client to race.
+   */
+  private counter = 0;
+
   constructor(
     readonly roomId: string,
     private readonly log: (msg: string) => void,
@@ -223,6 +231,7 @@ export class Room {
       // no replay log, no waiting for the next mousemove.
       peers: this.snapshotPeers(member.pid),
       target: this.targetWithScores(),
+      counter: this.counter,
     });
 
     if (resumed) {
@@ -287,6 +296,17 @@ export class Room {
         if (now >= this.target.until && withinTarget(msg.x, msg.y, this.target)) {
           this.pendingClaims.push({ pid: member.pid, st });
         }
+        return;
+      }
+
+      case 'counter': {
+        // The seq check is what makes this idempotent across a reconnect: a retransmitted
+        // click is dropped, not counted twice.
+        if (msg.seq <= member.lastSeq) return;
+        member.lastSeq = msg.seq;
+        this.counter += msg.delta;
+        // Not droppable, and not excluding the sender — see CounterStateMsg in the protocol.
+        this.broadcast({ t: 'counterState', st: now, value: this.counter, by: member.pid });
         return;
       }
 

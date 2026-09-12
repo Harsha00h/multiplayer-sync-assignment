@@ -161,6 +161,22 @@ If the new action needs *smoothed* motion (a dragged object, say), it reuses `Cu
 as-is — it is written against `{t, x, y}` in normalized coordinates and has no idea it is
 usually a mouse pointer.
 
+## Two kinds of shared state
+
+The room carries state of two different natures, and the protocol treats them differently
+on purpose:
+
+- **Relayed** (cursors, reactions): lossy-tolerant, high-frequency, no single truth. The
+  server forwards without owning, excludes the sender, and drops under backpressure.
+- **Authoritative** (target, scoreboard, tally): one truth, low-frequency, must not be
+  lost. The server owns the value, clients send intents, the result is broadcast to
+  everyone *including* the sender (the echo is the confirmation), and the frames are never
+  droppable.
+
+The tally is the clearest example: `{t:'counter', delta:+1}` is an intent, never a value,
+so two simultaneous clicks both count with no CRDT and no client-side merge. See the
+README for the trade against the CRDT approach.
+
 ## Fan-out: the cost model
 
 The naive bug the brief warns about is re-serializing the payload once per recipient. What

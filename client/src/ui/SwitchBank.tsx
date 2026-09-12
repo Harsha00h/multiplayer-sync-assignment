@@ -4,7 +4,7 @@ import type { RoomStats } from '../net/room.js';
 import type { NetworkEmulation } from '../net/connection.js';
 import { formatBytes } from './console.js';
 import { useDamped } from './useDamped.js';
-import { IconBuffer, IconCut, IconFeed, IconLink, IconTransmit } from './icons.js';
+import { IconBuffer, IconCut, IconFeed, IconLink, IconTally, IconTransmit } from './icons.js';
 
 export interface SwitchBankProps {
   stats: RoomStats | null;
@@ -21,6 +21,10 @@ export interface SwitchBankProps {
   emulation: NetworkEmulation;
   onEmulation: (next: Partial<NetworkEmulation>) => void;
   onCutLink: () => void;
+  counter: number;
+  /** Callsign of whoever last changed the tally, or null before anyone has. */
+  counterBy: string | null;
+  onCounter: (delta: 1 | -1) => void;
 }
 
 /**
@@ -133,6 +137,36 @@ export function SwitchBank(props: SwitchBankProps): ReactElement {
             value={stats ? stats.rejected + stats.droppedByEmulator : '—'}
           />
         </div>
+      </Group>
+
+      <Group title="Tally" glyph={<IconTally className="glyph" />}>
+        {/* Server-owned shared state, alongside the relayed kind. Clicks send an intent;
+            the number shown is whatever the server last confirmed, damped like every
+            other needle on the face. */}
+        <div className="tally">
+          <button
+            type="button"
+            className="key"
+            aria-label="Decrement tally"
+            onClick={() => props.onCounter(-1)}
+          >
+            −
+          </button>
+          <span className="tally-value">
+            <Damped n={props.counter} />
+          </span>
+          <button
+            type="button"
+            className="key"
+            aria-label="Increment tally"
+            onClick={() => props.onCounter(1)}
+          >
+            +
+          </button>
+        </div>
+        <span className="placard">
+          {props.counterBy ? `Last by ${props.counterBy.toUpperCase()}` : 'Shared by the room'}
+        </span>
       </Group>
 
       <Group title="Transmit" glyph={<IconTransmit className="glyph" />}>

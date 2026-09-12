@@ -8,6 +8,8 @@ export interface TopRailProps {
   /** Mission elapsed time, already formatted. */
   met: string;
   matrix: MatrixRow[];
+  /** Back to pre-flight. The console tears down cleanly; the server sees a clean close. */
+  onLeave: () => void;
 }
 
 const GLYPH = {
@@ -23,12 +25,15 @@ const GLYPH = {
  * The matrix carries state and only state — no numbers appear here, because every number
  * on this console is printed exactly once, in the switch group that governs it.
  */
-export function TopRail({ roomId, met, matrix }: TopRailProps): ReactElement {
+export function TopRail({ roomId, met, matrix, onLeave }: TopRailProps): ReactElement {
   return (
     <header className="rail-top">
       <div className="designation">
         <span className="placard">Room</span>
         <span className="room">{roomId}</span>
+        <button type="button" className="leave" onClick={onLeave}>
+          Change room
+        </button>
       </div>
 
       <div className="met">
