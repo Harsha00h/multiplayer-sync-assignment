@@ -1,0 +1,20 @@
+{
+  "name": "@multiplayer-sync/server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Raw-WebSocket relay server for the multiplayer cursor sync demo. No socket libraries.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "tsx --test ../tests/*.test.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.7.5",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}

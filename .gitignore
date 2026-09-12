@@ -1,0 +1,14 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+.env
+
+# Vendored design skill + its working files. PRODUCT.md and DESIGN.md are the
+# artifacts worth keeping; the toolchain that produced them is not.
+.agents/
+.impeccable/
+
+# Skill installer artifacts
+.claude/
+skills-lock.json
