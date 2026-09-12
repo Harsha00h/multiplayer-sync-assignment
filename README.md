@@ -4,6 +4,10 @@ A shared canvas where everyone in a room sees everyone else's cursor move live, 
 off emoji reactions, and can race each other to tap a target. Built directly on the raw
 `WebSocket` API and Node's built-in `http` module.
 
+**Live demo:** https://multiplayer-sync-assignment-production.up.railway.app — open it in
+a few tabs. Each tab is its own client. (Hosted on Railway's trial tier; if it ever 502s,
+the trial credit ran out — the repo runs identically with `npm install && npm run dev`.)
+
 **No sync or socket libraries.** No Socket.IO, Yjs, PartyKit, Liveblocks, Ably, Pusher —
 and no `ws` either. The RFC 6455 handshake, frame parser, masking, fragmentation, close
 handshake, ping/pong and backpressure are all in [`server/src/ws/`](server/src/ws/). The
@@ -38,7 +42,8 @@ npm start       # server serves the built client *and* the WebSocket on :8787
 
 Then open http://localhost:8787. One process, one origin — which is also what makes this
 deployable to any host that supports persistent WebSocket connections (Fly, Railway,
-Render, a VPS; **not** Vercel/Netlify static hosting).
+Render, a VPS; **not** Vercel/Netlify static hosting). The included `Dockerfile` and
+`railway.json` are what the live demo runs on.
 
 ### Tests and benchmark
 
